@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фразоскоп</title>
+    <style>
+        #game-field { font-size: 24px; text-align: center; margin: 20px; }
+        #input-field { display: block; width: 50%; margin: 0 auto 20px; padding: 10px; font-size: 18px; text-align: center; }
+        #indicators { display: flex; justify-content: center; margin: 20px; }
+        .indicator { width: 20px; height: 20px; background-color: grey; margin: 0 5px; border-radius: 50%; }
+        .indicator.active { background-color: green; }
+        #level, #errors { font-size: 18px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="game-field"></div>
+    <input type="text" id="input-field" placeholder="Введіть відповідь">
+    <div id="indicators">
+        <div class="indicator"></div><div class="indicator"></div><div class="indicator"></div>
+        <div class="indicator"></div><div class="indicator"></div><div class="indicator"></div>
+        <div class="indicator"></div>
+    </div>
+    <div id="level">Рівень: 1</div>
+    <div id="errors">Помилки: 0</div>
+    <script>
+        const words = ["яблуко", "банан", "вишня", "диня", "фінік", "виноград", "лимон", 
+                      "манго", "апельсин", "персик", "груша", "ананас", "слива", 
+                      "малина", "полуниця", "мандарин", "ківі", "гранат", "абрикос", "нектарин"];
+
+        let level = 1;
+        let correctAnswers = 0;
+        let errors = 0;
+        let currentPhrase = '';
+        let correctAnswer = '';
+        let shuffledWords = [...words];
+        let currentIndex = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        shuffledWords = shuffleArray(shuffledWords);
+
+        function generatePhrase(level) {
+            if (currentIndex + level > shuffledWords.length) {
+                shuffledWords = shuffleArray([...words]);
+                currentIndex = 0;
+            }
+            const phrase = shuffledWords.slice(currentIndex, currentIndex + level).join(' ');
+            currentIndex += level;
+            return phrase;
+        }
+
+        function getCorrectAnswer(phrase, level) {
+            if (level === 1) return phrase;
+            const wordsInPhrase = phrase.split(' ');
+            let answer = '';
+            wordsInPhrase.forEach(word => answer += word.slice(0, 2));
+            return answer;
+        }
+
+        function showPhrase() {
+            currentPhrase = generatePhrase(level);
+            correctAnswer = getCorrectAnswer(currentPhrase, level);
+            const gameField = document.getElementById('game-field');
+            gameField.textContent = currentPhrase;
+            setTimeout(() => gameField.textContent = '', 1000);
+        }
+
+        const inputField = document.getElementById('input-field');
+        inputField.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const userAnswer = inputField.value.trim().toLowerCase();
+                inputField.value = '';
+                checkAnswer(userAnswer);
+            }
+        });
+
+        function checkAnswer(userAnswer) {
+            if (userAnswer === correctAnswer) {
+                correctAnswers++;
+                updateIndicators();
+                if (correctAnswers === 7) levelUp();
+                else showPhrase();
+            } else {
+                errors++;
+                updateErrors();
+                if (errors === 2) gameOver();
+                else showPhrase();
+            }
+        }
+
+        function updateIndicators() {
+            const indicators = document.querySelectorAll('.indicator');
+            if (correctAnswers <= 7) indicators[correctAnswers - 1].classList.add('active');
+        }
+
+        function updateErrors() {
+            document.getElementById('errors').textContent = `Помилки: ${errors}`;
+        }
+
+        function levelUp() {
+            level++;
+            correctAnswers = 0;
+            errors = 0;
+            document.getElementById('level').textContent = `Рівень: ${level}`;
+            resetIndicators();
+            updateErrors();
+            showPhrase();
+        }
+
+        function resetIndicators() {
+            document.querySelectorAll('.indicator').forEach(indicator => 
+                indicator.classList.remove('active'));
+        }
+
+        function gameOver() {
+            alert('Гра закінчена! Ви досягли рівня ' + level);
+            level = 1;
+            correctAnswers = 0;
+            errors = 0;
+            resetIndicators();
+            updateErrors();
+            document.getElementById('level').textContent = `Рівень: ${level}`;
+            showPhrase();
+        }
+
+        showPhrase();
+    </script>
+</body>
+</html>
